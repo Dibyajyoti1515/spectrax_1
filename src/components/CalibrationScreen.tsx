@@ -21,6 +21,8 @@ export const CalibrationScreen: React.FC<CalibrationScreenProps> = ({
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  
+  // -- State variables --
   const [result, setResult] = useState<CalibrationResult>({
     status: 'red',
     message: 'Initializing system...',
@@ -38,10 +40,12 @@ export const CalibrationScreen: React.FC<CalibrationScreenProps> = ({
   const [countdownActive, setCountdownActive] = useState(false);
   const [countdownSeconds, setCountdownSeconds] = useState(3);
   
+  const [hoveredExercise, setHoveredExercise] = useState<string | null>(null);
+  
   const frameId = useRef<number>(0);
   const lastProcessTime = useRef<number>(0);
   const FPS_LIMIT = 15;
-  const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const countdownIntervalRef = useRef<number | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -66,7 +70,7 @@ export const CalibrationScreen: React.FC<CalibrationScreenProps> = ({
             const bt = bodyTypeEngine.analyze(results.poseLandmarks);
             setBodyTypeRes(bt);
             if (bt.bodyType !== 'scanning' && bt.confidence > 0.8) {
-               onBodyTypeDetected(bt.bodyType);
+              onBodyTypeDetected(bt.bodyType);
             }
 
             const gesture = gestureService.analyze(results.poseLandmarks);
@@ -207,61 +211,69 @@ export const CalibrationScreen: React.FC<CalibrationScreenProps> = ({
                 <Dumbbell size={14} color="var(--neon-purple)" />
                 <span style={{ fontSize: '0.65rem', color: 'var(--text-dim)', letterSpacing: '2px', textTransform: 'uppercase' }}>Select Exercise</span>
              </div>
+             
+             {/* Exercise Grid with Video Tooltips */}
              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {getSortedExercises().map((ex) => (
-                  <button 
-                    key={ex.key}
-                    onClick={() => onSelectExercise(ex.key)}
-                    style={{
-                      background: selectedExercise.key === ex.key ? 'var(--neon-purple)' : 'transparent',
-                      color: selectedExercise.key === ex.key ? '#fff' : 'var(--text-secondary)',
-                      padding: '8px 12px',
-                      borderRadius: '8px',
-                      fontSize: '0.75rem',
-                      fontWeight: 600,
-                      border: '1px solid rgba(168, 85, 247, 0.3)',
-                      cursor: 'pointer',
-                      textAlign: 'left',
-                      transition: 'all 0.3s ease'
-                    }}
+                  <div 
+                    key={ex.key} 
+                    style={{ position: 'relative' }}
+                    onMouseEnter={() => setHoveredExercise(ex.key)}
+                    onMouseLeave={() => setHoveredExercise(null)}
                   >
-                    {ex.name.toUpperCase()}
-                  </button>
+                    <button 
+                      onClick={() => onSelectExercise(ex.key)}
+                      style={{
+                        background: selectedExercise.key === ex.key ? 'var(--neon-purple)' : 'transparent',
+                        color: selectedExercise.key === ex.key ? '#fff' : 'var(--text-secondary)',
+                        padding: '8px 12px',
+                        borderRadius: '8px',
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        border: '1px solid rgba(168, 85, 247, 0.3)',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        transition: 'all 0.3s ease',
+                        width: '100%',
+                        position: 'relative',
+                        zIndex: 2
+                      }}
+                    >
+                      {ex.name.toUpperCase()}
+                    </button>
+
+                    {/* Video Overlay */}
+                    { (hoveredExercise === ex.key || (selectedExercise.key === ex.key && hoveredExercise === null)) && ex.demoUrl && (
+                      <div 
+                        className="animate-in"
+                        style={{
+                          position: 'absolute',
+                          right: '105%', // Pop out to the left
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          width: '240px', /* <--- INCREASED SIZE HERE */
+                          borderRadius: '12px', /* Slightly softer corners for larger video */
+                          overflow: 'hidden',
+                          border: '2px solid var(--neon-cyan)',
+                          boxShadow: '0 0 25px rgba(0, 240, 255, 0.3)', /* Stronger glow */
+                          backgroundColor: '#000',
+                          zIndex: 20,
+                          pointerEvents: 'none'
+                        }}
+                      >
+                        <video 
+                          src={ex.demoUrl} 
+                          autoPlay 
+                          loop 
+                          muted 
+                          playsInline 
+                          style={{ width: '100%', display: 'block', objectFit: 'cover' }}
+                        />
+                      </div>
+                    )}
+                  </div>
                 ))}
              </div>
-             {bodyTypeRes && (
-               <div className="glass animate-in" style={{ 
-                 marginTop: '16px', padding: '16px', 
-                 border: `1px solid ${bodyTypeRes.bodyType === 'scanning' ? 'rgba(255, 214, 0, 0.4)' : 'rgba(0, 240, 255, 0.4)'}`, 
-                 boxShadow: `0 0 20px ${bodyTypeRes.bodyType === 'scanning' ? 'rgba(255, 214, 0, 0.1)' : 'rgba(0, 240, 255, 0.1)'}`,
-                 background: 'rgba(10, 15, 30, 0.8)', 
-                 transition: 'all 0.4s ease'
-               }}>
-                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-                     <div style={{ fontSize: '0.65rem', color: 'var(--text-dim)', letterSpacing: '2px', textTransform: 'uppercase' }}>Body Architecture</div>
-                     {bodyTypeRes.bodyType === 'scanning' ? (
-                       <div className="radar-ping loading" style={{ width: '8px', height: '8px', background: 'var(--neon-yellow)', borderRadius: '50%' }}></div>
-                     ) : (
-                       <div style={{ fontSize: '0.7rem', color: 'var(--neon-cyan)', fontWeight: 800 }}>{(bodyTypeRes.confidence * 100).toFixed(0)}% MATCH</div>
-                     )}
-                 </div>
-                 <div style={{ 
-                   fontFamily: 'var(--font-heading)', 
-                   color: bodyTypeRes.bodyType === 'scanning' ? 'var(--neon-yellow)' : 'var(--neon-cyan)', 
-                   fontSize: '1.2rem', letterSpacing: '2px', 
-                   textShadow: `0 0 15px ${bodyTypeRes.bodyType === 'scanning' ? 'rgba(255, 214, 0, 0.5)' : 'rgba(0, 240, 255, 0.5)'}`
-                 }}>
-                   {bodyTypeRes.bodyType === 'scanning' ? 'ANALYZING...' : `${bodyTypeRes.bodyType.toUpperCase()}`}
-                 </div>
-                 <div style={{ 
-                   fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '10px', lineHeight: 1.5, 
-                   borderLeft: `2px solid ${bodyTypeRes.bodyType === 'scanning' ? 'var(--neon-yellow)' : 'var(--neon-cyan)'}`, 
-                   paddingLeft: '10px' 
-                 }}>
-                   {bodyTypeRes.explanation}
-                 </div>
-               </div>
-             )}
           </div>
         </div>
 
