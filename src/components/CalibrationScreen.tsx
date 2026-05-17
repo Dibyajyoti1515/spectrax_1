@@ -25,6 +25,8 @@ export const CalibrationScreen: React.FC<CalibrationScreenProps> = ({
     status: 'red',
     message: 'Initializing system...',
     isReady: false,
+    visibleCount: 0,
+    totalCount: 8,
   });
   const [error, setError] = useState<string | null>(null);
   const [bodyTypeRes, setBodyTypeRes] = useState<BodyTypeResult | null>(null);
@@ -279,11 +281,20 @@ export const CalibrationScreen: React.FC<CalibrationScreenProps> = ({
                <p style={{ fontFamily: 'var(--font-heading)', fontSize: '1.4rem', color: statusColor, letterSpacing: '4px', textShadow: `0 0 15px ${statusColor}44` }}>
                 {result.message.toUpperCase()}
                </p>
-               <div style={{ height: '2px', background: 'rgba(255,255,255,0.05)', margin: '16px 0', position: 'relative', overflow: 'hidden' }}>
-                  <div style={{ position: 'absolute', inset: 0, width: result.isReady ? '100%' : '40%', background: statusColor, transition: 'width 0.5s ease', boxShadow: `0 0 10px ${statusColor}` }} />
+               <div style={{ height: '4px', background: 'rgba(255,255,255,0.05)', margin: '16px 0', position: 'relative', overflow: 'hidden', borderRadius: '2px' }}>
+                  <div style={{ 
+                    position: 'absolute', 
+                    inset: 0, 
+                    width: `${result.isReady ? 100 : (result.totalCount > 0 ? (result.visibleCount / result.totalCount) * 100 : 0)}%`, 
+                    background: statusColor, 
+                    transition: 'width 0.4s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s ease', 
+                    boxShadow: `0 0 12px ${statusColor}` 
+                  }} />
                </div>
                <p style={{ fontSize: '0.65rem', color: 'var(--text-dim)', letterSpacing: '2px' }}>
-                 {result.isReady ? 'OPTIMAL POSITION ACHIEVED' : 'ACQUIRING BODY LANDMARKS...'}
+                 {result.isReady 
+                   ? 'OPTIMAL POSITION ACHIEVED' 
+                   : `ACQUIRING BODY LANDMARKS... (${result.visibleCount || 0}/${result.totalCount || 8})`}
                </p>
             </div>
           )}
