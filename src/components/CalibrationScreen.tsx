@@ -55,6 +55,7 @@ export const CalibrationScreen: React.FC<CalibrationScreenProps> = ({
     rightWristAboveShoulder: false,
     isPoseLost: false,
     isThumbsUp: false,
+    isCrossedArms: false,
   });
   const [countdownActive, setCountdownActive] = useState(false);
   const [countdownSeconds, setCountdownSeconds] = useState(3);
