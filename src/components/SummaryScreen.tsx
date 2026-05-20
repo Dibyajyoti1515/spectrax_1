@@ -1,28 +1,28 @@
-import React, { useEffect, useState } from 'react';
-import { Award, Clock, RotateCcw, Video, Activity } from 'lucide-react';
-import { useWorkoutSync } from '../hooks/useWorkoutSync';
+    import React, { useEffect, useState } from 'react';
+    import { Award, Clock, RotateCcw, Video, Activity } from 'lucide-react';
+    import { useWorkoutSync } from "../hooks/useWorkoutSync";
+    
+    interface SummaryScreenProps {
+      stats: { 
+        reps: number; 
+        totalReps: number;
+        correctReps: number;
+        repScores: number[];
+        duration: number; 
+        accuracy: number; 
+        mistakes: Record<string, number>; 
+        bestStreak: number; 
+        tags?: string[];
+        exerciseName?: string;
+      };
+      onRestart: () => void;
+      onViewReplay: () => void;
+    }
 
-interface SummaryScreenProps {
-  stats: { 
-    reps: number; 
-    totalReps: number;
-    correctReps: number;
-    repScores: number[];
-    duration: number; 
-    accuracy: number; 
-    mistakes: Record<string, number>; 
-    bestStreak: number; 
-    tags?: string[];
-    exerciseName?: string;
-  };
-  onRestart: () => void;
-  onViewReplay: () => void;
-}
-
-export const SummaryScreen: React.FC<SummaryScreenProps> = ({ stats, onRestart, onViewReplay }) => {
-  const [accuracy, setAccuracy] = useState(0);
-  const [isSavingWorkout, setIsSavingWorkout] = useState(false);
-  const { addWorkout } = useWorkoutSync();
+    export const SummaryScreen: React.FC<SummaryScreenProps> = ({ stats, onRestart, onViewReplay }) => {
+      const [accuracy, setAccuracy] = useState(0);
+      const [isSavingWorkout, setIsSavingWorkout] = useState(false);
+      const { addWorkout } = useWorkoutSync();
 
   useEffect(() => {
     // Animate accuracy ring on mount
